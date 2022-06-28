@@ -1,3 +1,5 @@
 __pycache__
 model_zoo
 example
+inference_test.py
+build_test.py

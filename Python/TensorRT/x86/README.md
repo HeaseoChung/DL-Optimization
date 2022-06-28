@@ -51,10 +51,10 @@ builder.create_engine(trt_save_path)
 ```python3
 import cv2
 import numpy as np
-from inference_engine import TRTEngine
+from inference_engine import EngineInferencer
 
 
-trt_engine = TRTEngine("model_zoo/test_pth.trt",256,256,dynamic=True)
+trt_engine = EngineInferencer("model_zoo/test_pth.trt",256,256,dynamic=True)
 
 image = cv2.imread("example/Lenna.png")
 height, width, _ = image.shape

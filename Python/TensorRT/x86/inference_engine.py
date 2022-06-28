@@ -18,7 +18,7 @@ class HostDeviceMem(object):
         """ CPU (host) & GPU (host)의 주소를 반환하는 메소드 """
         return self.__str__()
 
-class TRTEngine(object):
+class EngineInferencer(object):
     def __init__(self, trt_engine_path, height=-1, width=-1, channel=3,scale=2, dynamic=False):
         """ trt engine 셋팅 """
         # trt 로그 초기화
