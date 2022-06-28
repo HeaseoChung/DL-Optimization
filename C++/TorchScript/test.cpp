@@ -27,13 +27,13 @@ int main(int argc, const char* argv[]) {
     }
     
     cv::Mat img_rgb_u8 = cv::imread(argv[2]);
-    
+    cvtColor(img_rgb_u8, img_rgb_u8, cv::COLOR_BGR2RGB);
+
     //to tensor
     at::Tensor input = torch::from_blob(img_rgb_u8.data, {img_rgb_u8.rows, img_rgb_u8.cols, 3}, torch::kByte);
-    
+
     input = input.unsqueeze(0);
     input = input.permute({0, 3, 1, 2});
-    input = input.div(255);
 
     input = input.to(torch::kFloat32).to(torch::Device(torch::kCUDA, 1));
 
@@ -41,10 +41,12 @@ int main(int argc, const char* argv[]) {
     inputs.push_back(input);
 
     at::Tensor output = module.forward(inputs).toTensor();
+    
+    std::cout << "output size: " << output.sizes() << std::endl;
 
     output = output.permute({0, 2, 3, 1});
     output = output.squeeze();
-    output = output.mul(255);
+
     output = output.clamp(0, 255).to(torch::kU8).to(torch::kCPU);
     output = output.contiguous();
 
