@@ -2,13 +2,6 @@ import cv2
 import numpy as np
 from inference_engine import TRTEngine
 
-def sr_torch(image,model,device):
-    pre = totensor(image).unsqueeze(0).to(device)
-    with torch.no_grad():
-        sr = model(pre)
-    sr = sr.squeeze(0).mul(255).clamp(0,255).cpu().numpy()
-    sr = np.transpose(sr,[1,2,0])
-    return sr
 
 trt_engine = TRTEngine("model_zoo/test_pth.trt",256,256,dynamic=True)
 
@@ -28,5 +21,5 @@ post = np.reshape(post, (1,3,height*2, width*2)).astype(np.uint8)
 post = post.squeeze(0)
 post = np.transpose(post,[1,2,0])
 
-cv2.imwrite("example/Lenna_x2.png",post)
+cv2.imwrite("example/Lenna_x2.png", post)
 

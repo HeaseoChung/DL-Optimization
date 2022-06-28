@@ -72,6 +72,7 @@ class TRTEngine(object):
         return self.outputs[0].host
 
     def dynamicBindingProcess(self, height, width,scale, channel=3):
+        """ CPU & GPU 연동 메소드 """
         inputs, outputs, bindings = [], [], []
         input_tensor = torch.randn(1, channel, height, width, dtype=torch.float32)
 
@@ -96,20 +97,20 @@ class TRTEngine(object):
                 outputs.append(HostDeviceMem(host_mem, device_mem))
         return inputs, outputs, bindings
 
-    def bindingProcess(self):
-        """ CPU & GPU 연동 메소드 """
-        inputs, outputs, bindings = [], [], []
+    """ Legacy bindingProcess """
+    # def bindingProcess(self):
+    #     inputs, outputs, bindings = [], [], []
         
-        for binding in self.engine:
-            size = trt.volume(self.engine.get_binding_shape(binding)) * 1
-            dtype = trt.nptype(self.engine.get_binding_dtype(binding))
-            # CPU 메모리 사이즈 설정
-            host_mem = cuda.pagelocked_empty(size, dtype)
-            # GPU 메모리 사이즈 설정
-            device_mem = cuda.mem_alloc(host_mem.nbytes)
-            bindings.append(int(device_mem))
-            if self.engine.binding_is_input(binding):
-                inputs.append(HostDeviceMem(host_mem, device_mem))
-            else:
-                outputs.append(HostDeviceMem(host_mem, device_mem))
-        return inputs, outputs, bindings
+    #     for binding in self.engine:
+    #         size = trt.volume(self.engine.get_binding_shape(binding)) * 1
+    #         dtype = trt.nptype(self.engine.get_binding_dtype(binding))
+    #         # CPU 메모리 사이즈 설정
+    #         host_mem = cuda.pagelocked_empty(size, dtype)
+    #         # GPU 메모리 사이즈 설정
+    #         device_mem = cuda.mem_alloc(host_mem.nbytes)
+    #         bindings.append(int(device_mem))
+    #         if self.engine.binding_is_input(binding):
+    #             inputs.append(HostDeviceMem(host_mem, device_mem))
+    #         else:
+    #             outputs.append(HostDeviceMem(host_mem, device_mem))
+    #     return inputs, outputs, bindings
