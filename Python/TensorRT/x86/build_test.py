@@ -19,7 +19,7 @@ if use_dynamic_shape:
         ]
     ]
 else:
-    opt_shape_param = none
+    opt_shape_param = None
 
 if use_onnx:
     model = "Generator_x2_16x64.onnx"
