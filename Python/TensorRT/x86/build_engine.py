@@ -28,6 +28,7 @@ import pycuda.driver as cuda
 import pycuda.autoinit
 
 from image_batcher import ImageBatcher
+from torchvision.models.resnet import resnet50
 
 logging.basicConfig(level=logging.INFO)
 logging.getLogger("EngineBuilder").setLevel(logging.INFO)
@@ -264,8 +265,15 @@ def main(args):
             [1, 3, 512, 512]    # max
         ]
     ]
+    if args.type == "onnx":
+        log.info("Build ONNX to TensorRT")
+        model = args.onnx
+    else:
+        log.info("Build PTH to TensorRT")
+        model = resnet50().cuda().eval()
+
     builder = EngineBuilder(args.verbose)
-    builder.create_network(x, args.onnx, opt_shape_param)
+    builder.create_network(x, model, opt_shape_param)
     builder.create_engine(
         args.engine,
         args.precision,
@@ -276,9 +284,9 @@ def main(args):
         args.calib_preprocessor,
     )
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument("-t", "--type", help="The type of framework to build to trt", default="onnx")
     parser.add_argument("-o", "--onnx", help="The input ONNX model file to load")
     parser.add_argument("-e", "--engine", help="The output path for the TRT engine")
     parser.add_argument(
