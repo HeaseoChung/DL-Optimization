@@ -8,8 +8,8 @@ from model_zoo.models import Generator
 from build_engine import EngineBuilder
 
 x = torch.ones((1, 3, 224, 224)).cuda()
-use_dynamic_shape = false
-use_onnx = false
+use_dynamic_shape = False
+use_onnx = False
 if use_dynamic_shape:
     opt_shape_param = [
         [
