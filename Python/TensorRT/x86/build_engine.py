@@ -28,7 +28,7 @@ import pycuda.driver as cuda
 import pycuda.autoinit
 
 from image_batcher import ImageBatcher
-from torchvision.models.resnet import resnet50
+from model_zoo.models import Generator
 
 logging.basicConfig(level=logging.INFO)
 logging.getLogger("EngineBuilder").setLevel(logging.INFO)
@@ -270,7 +270,7 @@ def main(args):
         model = args.onnx
     else:
         log.info("Build PTH to TensorRT")
-        model = resnet50().cuda().eval()
+        model = Generator().cuda().eval()
 
     builder = EngineBuilder(args.verbose)
     builder.create_network(x, model, opt_shape_param)
