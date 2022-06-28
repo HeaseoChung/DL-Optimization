@@ -1,8 +1,19 @@
-## Contents
-- [Usage](Usage)
-  * [TensorRT Build](#Build-tensorRT-using-pth-or-onnx)
-  * [TensorRT Inference](#Inference-tensorRT-using-tensorRT)
+<a href="https://github.com/HeaseoChung/DL-Optimization/tree/master/Python/TensorRT/x86"><img src="https://img.shields.io/badge/-Documentation-brightgreen"/></a>
 
+# TensorRT for x86
+- Official codes of TensorRT for x86 is [HERE](https://github.com/NVIDIA/TensorRT)
+- New features are added in this repository
+
+## Contents
+- [New Features](#new-features)
+- [Usage](#usage)
+  * [TensorRT Build](#build-tensorrt-using-pth-or-onnx)
+  * [TensorRT Inference](#inference-tensorrt-using-tensorrt)
+
+## New Features
+- Build TensorRT using Dynamic shape
+- Inference TensorRT using Dynamic shape
+- Build TensorRT using Pytorch object
 
 ## Usage
 
