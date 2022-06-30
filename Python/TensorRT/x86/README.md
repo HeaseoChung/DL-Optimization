@@ -13,8 +13,8 @@
 ## New Features
 - Build TensorRT using Dynamic shape
 - Build TensorRT with PTQ quantization using calibration
-- Inference TensorRT using Dynamic shape
 - Build TensorRT using Pytorch object
+- Inference TensorRT using Dynamic shape
 
 ## Usage
 
