@@ -42,7 +42,7 @@ if use_onnx:
 else:
     model = Generator().cuda().eval()
 
-builder = EngineBuilder(args.verbose)
+builder = EngineBuilder(True)
 builder.create_network(x, model, opt_shape_param)
 builder.create_engine(trt_save_path)
 ```
