@@ -27,7 +27,7 @@ from build_engine import EngineBuilder
 ### Options
 use_dynamic_shape = False
 use_onnx = False
-precision = "fp16" #fp32, fp16, int8 can be selected
+precision = "fp16" # fp32, fp16, int8 can be selected
 
 if use_dynamic_shape:
     opt_shape_param = [
