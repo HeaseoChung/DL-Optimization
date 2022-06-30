@@ -24,9 +24,11 @@
 from model_zoo.models import Generator
 from build_engine import EngineBuilder
 
-x = torch.ones((1, 3, 224, 224)).cuda()
+### Options
 use_dynamic_shape = False
 use_onnx = False
+precision = "fp16" #fp32, fp16, int8 can be selected
+
 if use_dynamic_shape:
     opt_shape_param = [
         [
@@ -43,20 +45,29 @@ if use_onnx:
 else:
     model = Generator().cuda().eval()
 
+x = torch.ones((1, 3, 224, 224)).cuda() # Dummy input
 builder = EngineBuilder(True)
 builder.create_network(x, model, opt_shape_param)
 
+
 ### For fp32 and fp16
-builder.create_engine(trt_save_path)
+if precision == "fp32" || "fp16":
+    builder.create_engine(
+        trt_save_path,
+        precision=precision,
+        )
 
 ### For int8
-builder.create_engine(
-    trt_save_path,
-    precision="int8",
-    calib_input=dataset_path,
-    calib_shape=calib_shape, # calib_shape = torch.ones((8, 3, 64, 64))
-    calib_cache=calib_cache_path_to_save,
-)
+elif precision == "int8":
+    builder.create_engine(
+        trt_save_path,
+        precision=precision,
+        calib_input=dataset_path,
+        calib_shape=calib_shape, # calib_shape = torch.ones((8, 3, 64, 64))
+        calib_cache=calib_cache_path_to_save,
+    )
+else:
+    raise ValueError
 ```
 
 ### Inference tensorRT using tensorRT
