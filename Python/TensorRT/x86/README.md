@@ -52,18 +52,19 @@ builder.create_network(x, model, opt_shape_param)
 ### For fp32 and fp16
 if precision == "fp32" || "fp16":
     builder.create_engine(
-        trt_save_path,
+        engine_path="trt_save_path",
         precision=precision,
         )
 
 ### For int8
 elif precision == "int8":
+    calib_shape = torch.ones((8, 3, 64, 64))
     builder.create_engine(
-        trt_save_path,
+        engine_path="trt_save_path",
         precision=precision,
-        calib_input=dataset_path,
-        calib_shape=calib_shape, # calib_shape = torch.ones((8, 3, 64, 64))
-        calib_cache=calib_cache_path_to_save,
+        calib_input="dataset_path",
+        calib_shape=calib_shape,
+        calib_cache="calib_cache_path_to_save",
     )
 else:
     raise ValueError
