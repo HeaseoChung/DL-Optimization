@@ -12,6 +12,7 @@
 
 ## New Features
 - Build TensorRT using Dynamic shape
+- Build TensorRT with PTQ quantization using calibration
 - Inference TensorRT using Dynamic shape
 - Build TensorRT using Pytorch object
 
@@ -44,7 +45,18 @@ else:
 
 builder = EngineBuilder(True)
 builder.create_network(x, model, opt_shape_param)
+
+### For fp32 and fp16
 builder.create_engine(trt_save_path)
+
+### For int8
+builder.create_engine(
+    trt_save_path,
+    precision="int8",
+    calib_input=dataset_path,
+    calib_shape=calib_shape, # calib_shape = torch.ones((8, 3, 64, 64))
+    calib_cache=calib_cache_path_to_save,
+)
 ```
 
 ### Inference tensorRT using tensorRT
