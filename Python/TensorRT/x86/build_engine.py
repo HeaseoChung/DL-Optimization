@@ -19,7 +19,6 @@ import os
 import sys
 import io
 import logging
-import argparse
 import torch
 
 import numpy as np
@@ -28,7 +27,6 @@ import pycuda.driver as cuda
 import pycuda.autoinit
 
 from image_batcher import ImageBatcher
-from model_zoo.models import Generator
 
 logging.basicConfig(level=logging.INFO)
 logging.getLogger("EngineBuilder").setLevel(logging.INFO)
@@ -57,7 +55,10 @@ class EngineCalibrator(trt.IInt8EntropyCalibrator2):
         :param image_batcher: The ImageBatcher object
         """
         self.image_batcher = image_batcher
-        size = int(np.dtype(self.image_batcher.dtype).itemsize * np.prod(self.image_batcher.shape))
+        size = int(
+            np.dtype(self.image_batcher.dtype).itemsize
+            * np.prod(self.image_batcher.shape)
+        )
         self.batch_allocation = cuda.mem_alloc(size)
         self.batch_generator = self.image_batcher.get_batch()
 
@@ -82,7 +83,11 @@ class EngineCalibrator(trt.IInt8EntropyCalibrator2):
             return None
         try:
             batch, _ = next(self.batch_generator)
-            log.info("Calibrating image {} / {}".format(self.image_batcher.image_index, self.image_batcher.num_images))
+            log.info(
+                "Calibrating image {} / {}".format(
+                    self.image_batcher.image_index, self.image_batcher.num_images
+                )
+            )
             cuda.memcpy_htod(self.batch_allocation, np.ascontiguousarray(batch))
             return [int(self.batch_allocation)]
         except StopIteration:
@@ -129,8 +134,8 @@ class EngineBuilder:
 
         self.builder = trt.Builder(self.trt_logger)
         self.config = self.builder.create_builder_config()
-        self.profile =  self.builder.create_optimization_profile()
-        self.config.max_workspace_size = 8 * (2 ** 30)  # 8 GB
+        self.profile = self.builder.create_optimization_profile()
+        self.config.max_workspace_size = 8 * (2**30)  # 8 GB
 
         self.batch_size = None
         self.network = None
@@ -145,7 +150,7 @@ class EngineBuilder:
 
         self.network = self.builder.create_network(network_flags)
         self.parser = trt.OnnxParser(self.network, self.trt_logger)
-        
+
         ### Using Onnx path
         if isinstance(module, str):
             module = os.path.realpath(module)
@@ -155,33 +160,52 @@ class EngineBuilder:
                     for error in range(self.parser.num_errors):
                         log.error(self.parser.get_error(error))
                     sys.exit(1)
-        
+
         ### Using PyTorch Object
         else:
             if opt_shape_param:
                 dynamic_opt = {
-                            'input' : {2: 'input_heights', 3 : 'input_widths'}, # 가변적인 길이를 가진 차원 
-                            'output' : {2: 'output_heights', 3 : 'output_widths'}
-                            }
+                    "input": {2: "input_heights", 3: "input_widths"},  # 가변적인 길이를 가진 차원
+                    "output": {2: "output_heights", 3: "output_widths"},
+                }
             else:
                 dynamic_opt = None
 
             f = io.BytesIO()
-            torch.onnx.export(module, inputs, f, input_names=['input'], output_names=['output'], dynamic_axes=dynamic_opt)
+            torch.onnx.export(
+                module,
+                inputs,
+                f,
+                input_names=["input"],
+                output_names=["output"],
+                dynamic_axes=dynamic_opt,
+            )
             f.seek(0)
             onnx_bytes = f.read()
             self.parser.parse(onnx_bytes)
-        
+
         ### Input & Output Setting
-        self.inputs = [self.network.get_input(i) for i in range(self.network.num_inputs)]
-        self.outputs = [self.network.get_output(i) for i in range(self.network.num_outputs)]
+        self.inputs = [
+            self.network.get_input(i) for i in range(self.network.num_inputs)
+        ]
+        self.outputs = [
+            self.network.get_output(i) for i in range(self.network.num_outputs)
+        ]
 
         log.info("Network Description")
         for input in self.inputs:
             self.batch_size = input.shape[0]
-            log.info("Input '{}' with shape {} and dtype {}".format(input.name, input.shape, input.dtype))
+            log.info(
+                "Input '{}' with shape {} and dtype {}".format(
+                    input.name, input.shape, input.dtype
+                )
+            )
         for output in self.outputs:
-            log.info("Output '{}' with shape {} and dtype {}".format(output.name, output.shape, output.dtype))
+            log.info(
+                "Output '{}' with shape {} and dtype {}".format(
+                    output.name, output.shape, output.dtype
+                )
+            )
         assert self.batch_size > 0
         self.builder.max_batch_size = self.batch_size
 
@@ -196,28 +220,28 @@ class EngineBuilder:
                 opt_shape = tuple(input_tensor.shape)
                 min_shape = opt_shape
                 max_shape = opt_shape
-            self.profile.set_shape(['input'][input_index], min_shape, opt_shape, max_shape)
+            self.profile.set_shape(
+                ["input"][input_index], min_shape, opt_shape, max_shape
+            )
         self.config.add_optimization_profile(self.profile)
 
     def create_engine(
         self,
         engine_path,
-        precision="fp32",
+        precision="fp16",
         calib_input=None,
+        calib_shape=None,
         calib_cache=None,
         calib_num_images=25000,
-        calib_batch_size=8,
-        calib_preprocessor=None,
     ):
         """
         Build the TensorRT engine and serialize it to disk.
         :param engine_path: The path where to serialize the engine to.
         :param precision: The datatype to use for the engine, either 'fp32', 'fp16' or 'int8'.
         :param calib_input: The path to a directory holding the calibration images.
+        :param calib_shape: The shape for calibration including batch size.
         :param calib_cache: The path where to write the calibration cache to, or if it already exists, load it from.
         :param calib_num_images: The maximum number of images to use for calibration.
-        :param calib_batch_size: The batch size to use for the calibration process.
-        :param calib_preprocessor: The ImageBatcher preprocessor algorithm to use.
         """
         engine_path = os.path.realpath(engine_path)
         engine_dir = os.path.dirname(engine_path)
@@ -238,7 +262,7 @@ class EngineBuilder:
                 self.config.set_flag(trt.BuilderFlag.INT8)
                 self.config.int8_calibrator = EngineCalibrator(calib_cache)
                 if not os.path.exists(calib_cache):
-                    calib_shape = [calib_batch_size] + list(inputs[0].shape[1:])
+                    # list(inputs[0].shape[1:])
                     calib_dtype = trt.nptype(inputs[0].dtype)
                     self.config.int8_calibrator.set_image_batcher(
                         ImageBatcher(
@@ -247,10 +271,11 @@ class EngineBuilder:
                             calib_dtype,
                             max_num_images=calib_num_images,
                             exact_batches=True,
-                            preprocessor=calib_preprocessor,
                         )
                     )
 
-        with self.builder.build_engine(self.network, self.config) as engine, open(engine_path, "wb") as f:
+        with self.builder.build_engine(self.network, self.config) as engine, open(
+            engine_path, "wb"
+        ) as f:
             log.info("Serializing engine to file: {:}".format(engine_path))
             f.write(engine.serialize())
