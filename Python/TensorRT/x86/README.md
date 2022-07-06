@@ -23,7 +23,7 @@
 ```python3
 import torch
 from model_zoo.models import Generator
-from build_engine import EngineBuilder
+from esp_builder.trt_builder import EngineBuilder
 
 ### Options
 use_dynamic_shape = False
@@ -78,7 +78,7 @@ else:
 ```python3
 import cv2
 import numpy as np
-from inference_engine import EngineInferencer
+from esp_builder.trt_inference import EngineInferencer
 
 trt_path = (
     ""
