@@ -50,8 +50,8 @@ x = torch.ones((1, 3, 224, 224)).cuda() # Dummy input
 builder = EngineBuilder(True)
 builder.create_network(x, model, opt_shape_param)
 
-### For fp32 and fp16
-if precision == "fp32" || "fp16":
+### For fp32 or fp16
+if precision == "fp32" or "fp16":
     builder.create_engine(
         engine_path="trt_save_path",
         precision=precision,
