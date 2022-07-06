@@ -96,7 +96,7 @@ height, width, _ = image.shape
 if dynamic_shape:
     trt_engine.dynamicBindingProcess(height, width, scale)
 else:
-    trt_engine.staticsbindingProcess(height, width, scale)
+    trt_engine.staticsbindingProcess()
 
 pre = np.transpose(image, [2, 0, 1])
 pre = np.expand_dims(pre, axis=0) / 255.0
