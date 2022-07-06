@@ -80,24 +80,35 @@ import cv2
 import numpy as np
 from inference_engine import EngineInferencer
 
+trt_path = (
+    ""
+)
+input_image_path = ""
+output_image_path = ""
+dynamic_shape = True
 
-trt_engine = EngineInferencer("model_zoo/test_pth.trt",256,256,dynamic=True)
+trt_engine = EngineInferencer(trt_path)
 
-image = cv2.imread("example/Lenna.png")
+image = cv2.imread(input_image_path)
+scale = 2
 height, width, _ = image.shape
 
-trt_engine.inputs, trt_engine.outputs, trt_engine.bindings = trt_engine.dynamicBindingProcess(height,width, 2)
+if dynamic_shape:
+    trt_engine.dynamicBindingProcess(height, width, scale)
+else:
+    trt_engine.staticsbindingProcess(height, width, scale)
 
-pre = np.transpose(image,[2,0,1])
-pre = np.expand_dims(pre,axis=0)/255.
+pre = np.transpose(image, [2, 0, 1])
+pre = np.expand_dims(pre, axis=0) / 255.0
 
 sr = trt_engine.do_inference(pre)
 
-post = sr*255
-post = np.clip(post,0,255)
-post = np.reshape(post, (1,3,height*2, width*2)).astype(np.uint8)
+post = sr * 255
+post = np.clip(post, 0, 255)
+post = np.reshape(post, (1, 3, height * scale, width * scale)).astype(np.uint8)
 post = post.squeeze(0)
-post = np.transpose(post,[1,2,0])
+post = np.transpose(post, [1, 2, 0])
 
-cv2.imwrite("example/Lenna_x2.png", post)
+cv2.imwrite(output_image_path, post)
+
 ```
