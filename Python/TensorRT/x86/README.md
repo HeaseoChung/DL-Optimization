@@ -21,6 +21,7 @@
 ### Build tensorRT using pth or onnx
 
 ```python3
+import torch
 from model_zoo.models import Generator
 from build_engine import EngineBuilder
 
