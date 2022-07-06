@@ -22,9 +22,7 @@ class HostDeviceMem(object):
 
 
 class EngineInferencer(object):
-    def __init__(
-        self, trt_engine_path, height=-1, width=-1, channel=3, scale=2, dynamic=False
-    ):
+    def __init__(self, trt_engine_path):
         """trt engine 셋팅"""
         # trt 로그 초기화
         TRT_LOGGER = trt.Logger(trt.Logger.INTERNAL_ERROR)
@@ -36,13 +34,7 @@ class EngineInferencer(object):
         self.engine = self.load_engine(trt_runtime, trt_engine_path)
         # Inference 할 context 준비
         self.context = self.create_execution_context()
-        # CPU & GPU 연동
-        if not dynamic:
-            self.inputs, self.outputs, self.bindings = self.bindingProcess()
-        else:
-            self.inputs, self.outputs, self.bindings = self.dynamicBindingProcess(
-                height, width, scale, channel
-            )
+        self.inputs, self.outputs, self.bindings = [], [], []
 
     def load_engine(self, trt_runtime, engine_path):
         """엔진 로드 메소드"""
@@ -64,7 +56,9 @@ class EngineInferencer(object):
         # 호스트에 lr 이미지 복사
         for host in hosts:
             # lr 이미지를 float16 데이터타입을 가진 1차원으로 변형
-            numpy_array = np.asarray(frame).astype(trt.nptype(trt.float32)).ravel()
+            numpy_array = (
+                np.asarray(frame).astype(trt.nptype(trt.float32)).ravel()
+            )
             np.copyto(host, numpy_array)
 
         # Transfer input data to the GPU.
@@ -87,10 +81,6 @@ class EngineInferencer(object):
         return self.outputs[0].host
 
     def dynamicBindingProcess(self, height, width, scale, channel=3):
-        """CPU & GPU 연동 메소드"""
-        inputs, outputs, bindings = [], [], []
-        input_tensor = torch.randn(1, channel, height, width, dtype=torch.float32)
-
         for i, binding in enumerate(self.engine):
             if self.engine.binding_is_input(binding):
                 self.context.set_binding_shape(i, (1, channel, height, width))
@@ -106,28 +96,24 @@ class EngineInferencer(object):
             host_mem = cuda.pagelocked_empty(size, dtype)
             # GPU 메모리 사이즈 설정
             device_mem = cuda.mem_alloc(host_mem.nbytes)
-            bindings.append(int(device_mem))
+            self.bindings.append(int(device_mem))
 
             if self.engine.binding_is_input(binding):
-                inputs.append(HostDeviceMem(host_mem, device_mem))
+                self.inputs.append(HostDeviceMem(host_mem, device_mem))
             else:
-                outputs.append(HostDeviceMem(host_mem, device_mem))
-        return inputs, outputs, bindings
+                self.outputs.append(HostDeviceMem(host_mem, device_mem))
 
-    """ Legacy bindingProcess """
-    # def bindingProcess(self):
-    #     inputs, outputs, bindings = [], [], []
-
-    #     for binding in self.engine:
-    #         size = trt.volume(self.engine.get_binding_shape(binding)) * 1
-    #         dtype = trt.nptype(self.engine.get_binding_dtype(binding))
-    #         # CPU 메모리 사이즈 설정
-    #         host_mem = cuda.pagelocked_empty(size, dtype)
-    #         # GPU 메모리 사이즈 설정
-    #         device_mem = cuda.mem_alloc(host_mem.nbytes)
-    #         bindings.append(int(device_mem))
-    #         if self.engine.binding_is_input(binding):
-    #             inputs.append(HostDeviceMem(host_mem, device_mem))
-    #         else:
-    #             outputs.append(HostDeviceMem(host_mem, device_mem))
-    #     return inputs, outputs, bindings
+    def staticsbindingProcess(self):
+        for binding in self.engine:
+            size = trt.volume(self.engine.get_binding_shape(binding)) * 1
+            dtype = trt.nptype(self.engine.get_binding_dtype(binding))
+            # CPU 메모리 사이즈 설정
+            host_mem = cuda.pagelocked_empty(size, dtype)
+            # GPU 메모리 사이즈 설정
+            device_mem = cuda.mem_alloc(host_mem.nbytes)
+            self.bindings.append(int(device_mem))
+            if self.engine.binding_is_input(binding):
+                self.inputs.append(HostDeviceMem(host_mem, device_mem))
+            else:
+                self.outputs.append(HostDeviceMem(host_mem, device_mem))
+        return self.inputs, self.outputs, self.bindings
