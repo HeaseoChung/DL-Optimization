@@ -29,6 +29,9 @@ from build_engine import EngineBuilder
 use_dynamic_shape = False
 use_onnx = False
 precision = "fp16" # fp32, fp16, int8 can be selected
+save_trt_path = ""
+calib_dataset_path = ""
+calib_cache_path_to_save = ""
 
 if use_dynamic_shape:
     opt_shape_param = [
@@ -53,7 +56,7 @@ builder.create_network(x, model, opt_shape_param)
 ### For fp32 or fp16
 if precision == "fp32" or "fp16":
     builder.create_engine(
-        engine_path="trt_save_path",
+        engine_path=save_trt_path,
         precision=precision,
         )
 
@@ -61,11 +64,11 @@ if precision == "fp32" or "fp16":
 elif precision == "int8":
     calib_shape = torch.ones((8, 3, 64, 64))
     builder.create_engine(
-        engine_path="trt_save_path",
+        engine_path=save_trt_path,
         precision=precision,
-        calib_input="dataset_path",
+        calib_input=calib_dataset_path,
         calib_shape=calib_shape,
-        calib_cache="calib_cache_path_to_save",
+        calib_cache=calib_cache_path_to_save,
     )
 else:
     raise ValueError("Unsupported type")
