@@ -67,7 +67,7 @@ elif precision == "int8":
         calib_cache="calib_cache_path_to_save",
     )
 else:
-    raise ValueError
+    raise ValueError("Unsupported type")
 ```
 
 ### Inference tensorRT using tensorRT
