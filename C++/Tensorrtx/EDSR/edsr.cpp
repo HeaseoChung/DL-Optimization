@@ -75,19 +75,16 @@ ICudaEngine* build_engine(unsigned int maxBatchSize, IBuilder* builder,
   tail_0->setStrideNd(DimsHW{1, 1});
   tail_0->setPaddingNd(DimsHW{1, 1});
 
-  // TODO PixelShuffle CUDA
   IShuffleLayer* shuffle1 = network->addShuffle(*tail_0->getOutput(0));
-  // out_channels = in_channels  // (scale_factor * scale_factor)
   Dims dm;
   dm.nbDims = 5;
-  // TODO 딤스 당장 고쳐!
+
   dm.d[0] = 64;
   dm.d[1] = OUT_SCALE;
   dm.d[2] = OUT_SCALE;
   dm.d[3] = INPUT_H;
   dm.d[4] = INPUT_W;
 
-  // out_channels, scale_factor, scale_factor, in_height, in_width
   shuffle1->setReshapeDimensions(dm);
   IShuffleLayer* shuffle2 = network->addShuffle(*shuffle1->getOutput(0));
 
@@ -111,7 +108,6 @@ ICudaEngine* build_engine(unsigned int maxBatchSize, IBuilder* builder,
   IActivationLayer* relu = network->addActivation(*shuffle2->getOutput(0),
                                                   ActivationType::kLEAKY_RELU);
 
-  // TODO check Do I need to Set ReLU as true
   IConvolutionLayer* tail_3 = network->addConvolutionNd(
       *relu->getOutput(0), INPUT_C, DimsHW{3, 3}, weightMap["tail.3.weight"],
       weightMap["tail.3.bias"]);
