@@ -88,8 +88,6 @@ ICudaEngine* build_engine(unsigned int maxBatchSize, IBuilder* builder,
   shuffle1->setReshapeDimensions(dm);
   IShuffleLayer* shuffle2 = network->addShuffle(*shuffle1->getOutput(0));
 
-  ITensor* temp = shuffle2->getOutput(0);
-
   Permutation perm;
   perm.order[0] = 0;
   perm.order[1] = 3;
@@ -313,7 +311,7 @@ int main(int argc, char** argv) {
 
   cv::Mat frame = cv::Mat(INPUT_H * OUT_SCALE, INPUT_W * OUT_SCALE, CV_8UC3,
                           outputs.data());
-  cv::imwrite(file_names[0] + ".png", frame);
+  cv::imwrite(file_names[0], frame);
 
   // Release stream and buffers
   cudaStreamDestroy(stream);
