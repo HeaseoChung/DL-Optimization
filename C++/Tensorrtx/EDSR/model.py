@@ -38,38 +38,26 @@ class EDSR(nn.Module):
         )
         body = [ResBlock(num_feats, res_scale) for _ in range(num_blocks)]
         self.body = nn.Sequential(*body)
-        # self.tail = nn.Sequential(
-        #     nn.Conv2d(num_feats, num_feats * (scale_factor ** 2), kernel_size=3, stride=1, padding=1),
-        #     nn.PixelShuffle(scale_factor),
-        #     nn.ReLU(True),
-        #     nn.Conv2d(num_feats, num_channels, kernel_size=3, stride=1, padding=1),
-        # )
-        self.tail_1 = nn.Conv2d(
-            num_feats,
-            num_feats * (scale_factor**2),
-            kernel_size=3,
-            stride=1,
-            padding=1,
-        )
-        self.tail_2 = nn.PixelShuffle(scale_factor)
-        self.tail_3 = nn.ReLU(True)
-        self.tail_4 = nn.Conv2d(
-            num_feats, num_channels, kernel_size=3, stride=1, padding=1
+        self.tail = nn.Sequential(
+            nn.Conv2d(
+                num_feats,
+                num_feats * (scale_factor**2),
+                kernel_size=3,
+                stride=1,
+                padding=1,
+            ),
+            nn.PixelShuffle(scale_factor),
+            nn.ReLU(True),
+            nn.Conv2d(
+                num_feats, num_channels, kernel_size=3, stride=1, padding=1
+            ),
         )
 
     def forward(self, x):
         x = self.head(x)
         res = self.body(x)
         res += x
-        # x = self.tail(res)
-        x = self.tail_1(res)
-        print(f"tail 1 : {x.size()}")
-        x = self.tail_2(x)
-        print(f"tail 2 : {x.size()}")
-        x = self.tail_3(x)
-        print(f"tail 3 : {x.size()}")
-        x = self.tail_4(x)
-        print(f"tail 4 : {x.size()}")
+        x = self.tail(res)
         return x
 
 
