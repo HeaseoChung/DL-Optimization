@@ -76,9 +76,9 @@ ICudaEngine* build_engine(unsigned int maxBatchSize, IBuilder* builder,
   tail_0->setPaddingNd(DimsHW{1, 1});
 
   IShuffleLayer* shuffle1 = network->addShuffle(*tail_0->getOutput(0));
+
   Dims dm;
   dm.nbDims = 5;
-
   dm.d[0] = 64;
   dm.d[1] = OUT_SCALE;
   dm.d[2] = OUT_SCALE;
@@ -88,21 +88,9 @@ ICudaEngine* build_engine(unsigned int maxBatchSize, IBuilder* builder,
   shuffle1->setReshapeDimensions(dm);
   IShuffleLayer* shuffle2 = network->addShuffle(*shuffle1->getOutput(0));
 
-  Permutation perm;
-  perm.order[0] = 0;
-  perm.order[1] = 3;
-  perm.order[2] = 1;
-  perm.order[3] = 4;
-  perm.order[4] = 2;
-
-  Dims dm2;
-  dm2.nbDims = 3;
-  dm2.d[0] = 64;
-  dm2.d[1] = INPUT_H * OUT_SCALE;
-  dm2.d[2] = INPUT_W * OUT_SCALE;
-
-  shuffle2->setFirstTranspose(perm);
-  shuffle2->setReshapeDimensions(dm2);
+  shuffle2->setFirstTranspose(Permutation{0, 3, 1, 4, 2});
+  shuffle2->setReshapeDimensions(
+      Dims3{64, INPUT_H * OUT_SCALE, INPUT_W * OUT_SCALE});
   IActivationLayer* relu = network->addActivation(*shuffle2->getOutput(0),
                                                   ActivationType::kLEAKY_RELU);
 
