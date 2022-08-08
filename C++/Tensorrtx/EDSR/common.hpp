@@ -65,7 +65,6 @@ ITensor* ResidualBlock(INetworkDefinition* network,
   IActivationLayer* relu_1 = network->addActivation(
       *body_1->getOutput(0), ActivationType::kLEAKY_RELU);
 
-  // TODO check Do I need to Set ReLU as true
   ITensor* x1 = relu_1->getOutput(0);
 
   // Body 2 in ResidualBlock
