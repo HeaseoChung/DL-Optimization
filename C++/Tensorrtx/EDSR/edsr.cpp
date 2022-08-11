@@ -75,27 +75,11 @@ ICudaEngine* build_engine(unsigned int maxBatchSize, IBuilder* builder,
   tail_0->setStrideNd(DimsHW{1, 1});
   tail_0->setPaddingNd(DimsHW{1, 1});
 
-  IShuffleLayer* shuffle1 = network->addShuffle(*tail_0->getOutput(0));
-
-  Dims dm;
-  dm.nbDims = 5;
-  dm.d[0] = 64;
-  dm.d[1] = OUT_SCALE;
-  dm.d[2] = OUT_SCALE;
-  dm.d[3] = INPUT_H;
-  dm.d[4] = INPUT_W;
-
-  shuffle1->setReshapeDimensions(dm);
-  IShuffleLayer* shuffle2 = network->addShuffle(*shuffle1->getOutput(0));
-
-  shuffle2->setFirstTranspose(Permutation{0, 3, 1, 4, 2});
-  shuffle2->setReshapeDimensions(
-      Dims3{64, INPUT_H * OUT_SCALE, INPUT_W * OUT_SCALE});
-  IActivationLayer* relu = network->addActivation(*shuffle2->getOutput(0),
-                                                  ActivationType::kLEAKY_RELU);
+  ITensor* upsample =
+      PixelShuffle(network, tail_0->getOutput(0), OUT_SCALE, INPUT_H, INPUT_W);
 
   IConvolutionLayer* tail_3 = network->addConvolutionNd(
-      *relu->getOutput(0), INPUT_C, DimsHW{3, 3}, weightMap["tail.3.weight"],
+      *upsample, INPUT_C, DimsHW{3, 3}, weightMap["tail.3.weight"],
       weightMap["tail.3.bias"]);
   tail_3->setStrideNd(DimsHW{1, 1});
   tail_3->setPaddingNd(DimsHW{1, 1});

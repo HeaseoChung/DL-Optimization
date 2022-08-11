@@ -52,6 +52,29 @@ std::map<std::string, Weights> loadWeights(const std::string file) {
   return weightMap;
 }
 
+ITensor* PixelShuffle(INetworkDefinition* network, ITensor* x, int OUT_SCALE,
+                      int INPUT_H, int INPUT_W) {
+  IShuffleLayer* shuffle1 = network->addShuffle(*x);
+
+  Dims dm;
+  dm.nbDims = 5;
+  dm.d[0] = 64;
+  dm.d[1] = OUT_SCALE;
+  dm.d[2] = OUT_SCALE;
+  dm.d[3] = INPUT_H;
+  dm.d[4] = INPUT_W;
+
+  shuffle1->setReshapeDimensions(dm);
+  IShuffleLayer* shuffle2 = network->addShuffle(*shuffle1->getOutput(0));
+
+  shuffle2->setFirstTranspose(Permutation{0, 3, 1, 4, 2});
+  shuffle2->setReshapeDimensions(
+      Dims3{64, INPUT_H * OUT_SCALE, INPUT_W * OUT_SCALE});
+  IActivationLayer* relu = network->addActivation(*shuffle2->getOutput(0),
+                                                  ActivationType::kLEAKY_RELU);
+  return relu->getOutput(0);
+}
+
 ITensor* ResidualBlock(INetworkDefinition* network,
                        std::map<std::string, Weights>& weightMap, ITensor* x,
                        std::string lname) {
